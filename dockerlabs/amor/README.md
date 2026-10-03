@@ -19,13 +19,13 @@
 
 Se verificó la conectividad con el objetivo y se ejecutó `nmap` para identificar los servicios expuestos.
 
-![Escaneo NMAP](assest/Pasted%20image%2020260924194322.png)
+![Escaneo NMAP](assets/Pasted%20image%2020260924194322.png)
 
 El único servicio relevante es el puerto 80, por lo que se procedió a inspeccionarlo desde el navegador.
 
 ### Enumeración web
 
-![Pasted image 20260924221152.png](Pasted%20image%2020260924221152.png)
+![Pasted image 20260924221152.png](assets/Pasted%20image%2020260924221152.png)
 
 El sitio publicaba nombres de posibles usuarios del sistema, entre ellos `carlota` y `oscar`. Esa información es directamente aprovechable para un ataque de fuerza bruta contra SSH.
 
