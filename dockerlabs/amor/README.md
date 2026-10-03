@@ -19,7 +19,7 @@
 
 Se verificó la conectividad con el objetivo y se ejecutó `nmap` para identificar los servicios expuestos.
 
-![Escaneo NMAP](Pasted%20image%2020260924194322.png)
+![Escaneo NMAP](assest/Pasted%20image%2020260924194322.png)
 
 El único servicio relevante es el puerto 80, por lo que se procedió a inspeccionarlo desde el navegador.
 
