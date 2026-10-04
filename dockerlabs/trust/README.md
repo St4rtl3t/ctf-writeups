@@ -185,4 +185,23 @@ Contramedidas recomendadas para cada vulnerabilidad identificada durante la audi
 
 ### Escalada de privilegios mediante `sudo vim`
 
-**Vulnerabilidad:** El usuario `mario` podía ejecutar `vim` mediante `sudo`
+**Vulnerabilidad:** El usuario `mario` podía ejecutar `vim` mediante `sudo`, permitiendo utilizar las funcionalidades del editor para ejecutar comandos con privilegios de `root`.
+
+**Mitigaciones:**
+
+* Evitar otorgar permisos `sudo` sobre editores de texto como `vim`, `vi` o `nano` cuando no sean estrictamente necesarios.
+* Aplicar el principio de mínimo privilegio en la configuración de `sudoers`.
+* Si un usuario necesita modificar archivos concretos, utilizar scripts o mecanismos controlados en lugar de conceder acceso completo a un editor.
+* Auditar periódicamente las reglas de `sudo` mediante `sudo -l` y revisar especialmente los binarios que permiten ejecutar comandos externos.
+* Utilizar herramientas como GTFOBins como referencia durante las auditorías para identificar binarios que puedan utilizarse para escapar de restricciones de privilegios.
+
+**Defensa en Profundidad:** Las vulnerabilidades encontradas se pueden encadenar para comprometer completamente el sistema. La exposición de información permitió identificar un usuario, la contraseña débil permitió obtener acceso mediante SSH y la configuración excesivamente permisiva de `sudo` permitió escalar hasta `root`. La aplicación conjunta de controles de acceso, autenticación robusta y mínimo privilegio reduce el riesgo de compromiso completo.
+
+---
+
+## Referencias
+
+* [GTFOBins - vim](https://gtfobins.github.io/gtfobins/vim/)
+* [Hydra - THC Hydra](https://github.com/vanhauser-thc/thc-hydra)
+* [OpenSSH](https://www.openssh.com/)
+* [Sudoers Manual](https://www.sudo.ws/docs/man/sudoers.man/)
