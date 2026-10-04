@@ -19,13 +19,13 @@
 
 Se verificó la conectividad con el objetivo y se ejecutó `nmap` para identificar los servicios expuestos.
 
-![Escaneo NMAP](Pasted%20image%2020260924194322.png)
+![Escaneo NMAP](assets/Pasted%20image%2020260924194322.png)
 
 El único servicio relevante es el puerto 80, por lo que se procedió a inspeccionarlo desde el navegador.
 
 ### Enumeración web
 
-![Pasted image 20260924221152.png](Pasted%20image%2020260924221152.png)
+![Enumeración web](assets/Pasted%20image%2020260924221152.png)
 
 El sitio publicaba nombres de posibles usuarios del sistema, entre ellos `carlota` y `oscar`. Esa información es directamente aprovechable para un ataque de fuerza bruta contra SSH.
 
@@ -38,7 +38,7 @@ El sitio publicaba nombres de posibles usuarios del sistema, entre ellos `carlot
 
 Con los nombres de usuario identificados, se lanzó un ataque de fuerza bruta contra el servicio SSH utilizando `hydra`.
 
-![Pasted image 20260924195231.png](Pasted%20image%2020260924195231.png)
+![Fuerza bruta SSH con hydra](assets/Pasted%20image%2020260924195231.png)
 
 **Credenciales obtenidas:**
 
@@ -48,11 +48,11 @@ Con los nombres de usuario identificados, se lanzó un ataque de fuerza bruta co
 
 Con las credenciales en mano se accedió vía SSH y se verificaron los grupos y permisos del usuario.
 
-![Pasted image 20260924195516.png](Pasted%20image%2020260924195516.png)
+![Acceso SSH como carlota](assets/Pasted%20image%2020260924195516.png)
 
 Ya dentro del sistema, se enumeró el archivo `/etc/passwd` para identificar otros usuarios.
 
-![Pasted image 20260924195545.png](Pasted%20image%2020260924195545.png)
+![Enumeración de /etc/passwd](assets/Pasted%20image%2020260924195545.png)
 
 **Desglose de comandos**
 - `hydra`: herramienta de fuerza bruta que soporta múltiples protocolos (en este caso, SSH).
@@ -66,7 +66,7 @@ Se identificó un segundo usuario: `oscar`. Sin sus credenciales no había forma
 
 Dentro de `/home/carlota/Desktop` se encontró una carpeta llamada `Vacaciones` con una imagen `imagen.jpg`. Se analizó con `steghide` en busca de contenido oculto.
 
-![Pasted image 20260924201908.png](Pasted%20image%2020260924201908.png)
+![Análisis esteganográfico con steghide](assets/Pasted%20image%2020260924201908.png)
 
 La herramienta confirmó la existencia de un archivo `secret.txt` embebido. Se procedió a extraerlo.
 
@@ -74,11 +74,11 @@ La herramienta confirmó la existencia de un archivo `secret.txt` embebido. Se p
 steghide extract -sf imagen.jpg
 ```
 
-![Pasted image 20260924211335.png](Pasted%20image%2020260924211335.png)
+![Extracción del contenido oculto](assets/Pasted%20image%2020260924211335.png)
 
 El archivo extraído contenía un string en Base64 que, al decodificarse, reveló la contraseña de `oscar`.
 
-![Pasted image 20260924211532.png](Pasted%20image%2020260924211532.png)
+![Decodificación Base64](assets/Pasted%20image%2020260924211532.png)
 
 **Credenciales obtenidas:**
 
@@ -98,7 +98,7 @@ Password: eslacasadepinypon
 
 Se reutilizaron las credenciales para acceder vía SSH y se verificaron los permisos de `sudo`.
 
-![Pasted image 20260924211825.png](Pasted%20image%2020260924211825.png)
+![Acceso SSH como oscar y sudo -l](assets/Pasted%20image%2020260924211825.png)
 
 El resultado del `sudo -l` mostró una regla crítica:
 
@@ -109,7 +109,7 @@ User oscar may run the following commands on 564fdd50fcd5:
 
 Es decir, `oscar` puede ejecutar `ruby` como `root` sin contraseña. Antes de explotarlo, se revisaron los directorios en busca de más pistas.
 
-![Pasted image 20260924212148.png](Pasted%20image%2020260924212148.png)
+![Revisión de directorios y pistas](assets/Pasted%20image%2020260924212148.png)
 
 El archivo mencionaba revisar el escritorio de `root` en busca de un archivo de texto. Es decir, la flag final está en `/root/Desktop`.
 
@@ -123,7 +123,7 @@ Consultando [GTFOBins](https://gtfobins.github.io/gtfobins/ruby/) se identificó
 ruby -e 'exec "/bin/sh"'
 ```
 
-![Pasted image 20260924212539.png](Pasted%20image%2020260924212539.png)
+![Escalada de privilegios con ruby](assets/Pasted%20image%2020260924212539.png)
 
 **Desglose de comandos**
 - `ruby`: intérprete del lenguaje Ruby.
@@ -136,9 +136,10 @@ ruby -e 'exec "/bin/sh"'
 
 Ya como `root`, se accedió al directorio indicado por la pista para leer la flag final.
 
-![Pasted image 20260924212800.png](Pasted%20image%2020260924212800.png)
+![Lectura de la flag final](assets/Pasted%20image%2020260924212800.png)
 
 Con esto se confirma el fin de la máquina de forma exitosa.
+
 ---
 
 ## Más Allá del Reto
