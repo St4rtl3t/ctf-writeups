@@ -21,10 +21,10 @@ Iniciamos las tareas de reconocimiento ejecutando un escaneo con `nmap` para ide
 nmap -sS -p- -vvv --min-rate 5000 172.17.0.2
 ```
 
-![](Pasted%20image%2020261004232340.png)
+![](assets/Pasted%20image%2020261004232340.png)
 
 Posteriormente, se inspecciona el servicio web expuesto en el puerto 80, descargando el archivo de captura de tráfico (`.pcap`) y dando inicio formal al caso interactivo desde la plataforma.
-![](Pasted%20image%2020261004232957.png)
+![](assets/Pasted%20image%2020261004232957.png)
 
 ## Análisis de Tráfico e Investigación (Forense Web)
 
@@ -33,12 +33,12 @@ Posteriormente, se inspecciona el servicio web expuesto en el puerto 80, descarg
 Empezamos la investigación filtrando en Wireshark por `http`. Entre varios resultados, se observa una solicitud `POST` al recurso `/reviews/upload.php`. Analizándola más a fondo, se ve claramente que es un intento de subir un archivo `.php` simulando un formulario que intenta generar una webshell, utilizando una herramienta automatizada como `ReconBot`. Al final, se observa cómo la petición es rechazada con un código de error `403` al tratarse de un archivo no permitido.
 
 - **IP Source:** `198.51.100.23`
-    ![](Pasted%20image%2020261004234717.png)
-    ![](Pasted%20image%2020261004235314.png)
+    ![](assets/Pasted%20image%2020261004234717.png)
+    ![](assets/Pasted%20image%2020261004235314.png)
 
 Continuando la investigación y revisando las tramas subsiguientes, se constata que la misma IP logró subir una imagen con el siguiente nombre y extensión (`image.jpg.php`), dentro de la ruta `/reviews/uploads/image.jpg.php`, obteniendo de este modo una webshell.
 
-- ![](Pasted%20image%2020261005201951.png)
+- ![](assets/Pasted%20image%2020261005201951.png)
 ### 2. Atribución geográfica
 
 Según el feed de threat intelligence adjunto (`threat_intel_feed.json`), analizando específicamente la IP atacante identificada en la sección anterior:
@@ -46,28 +46,28 @@ Según el feed de threat intelligence adjunto (`threat_intel_feed.json`), analiz
 Utilizando el archivo mencionado en la realización de la consulta (mediante herramientas de texto como `nano`), se comprueba que los metadatos de la IP determinan su procedencia.
 
 - **País:** Vietnam
-    ![](Pasted%20image%2020261005205709.png)
+    ![](assets/Pasted%20image%2020261005205709.png)
 
 ### 3. Huella del atacante
 
 Identificación del agente de usuario utilizado en las peticiones HTTP automatizadas del atacante.
 
 - **User-Agent:** `Mozilla/5.0 (compatible; ReconBot/1.0; +http://lab.invalid/reconbot)`
-    ![](Pasted%20image%2020261005205850.png)
+    ![](assets/Pasted%20image%2020261005205850.png)
 
 ### 4. Endpoint de subida
 
 La ruta o script específico del servidor hacia donde se envían las peticiones `POST` que gestionan la carga de archivos.
 
 - **Endpoint:** `/reviews/upload.php`
-    ![](Pasted%20image%2020261005210120.png)
+    ![](assets/Pasted%20image%2020261005210120.png)
 
 ### 5. Directorio de subidas
 
 Durante la fase de reconocimiento de rutas, el atacante prueba varias ubicaciones hasta dar con el directorio real habilitado en el sitio.
 
 - **Directorio:** `/reviews/uploads/`
-    ![](Pasted%20image%2020261005210539.png)
+    ![](assets/Pasted%20image%2020261005210539.png)
 
 ### 6. El archivo malicioso
 
@@ -80,21 +80,21 @@ La primera tentativa de subida es bloqueada por el filtro del servidor, pero la 
 Tras acceder al recurso malicioso alojado, el servidor ejecuta las instrucciones y establece una conexión saliente (reverse shell) hacia la infraestructura del atacante.
 
 - **Puerto de conexión:** `8080`
-    ![](Pasted%20image%2020261005210830.png)
+    ![](assets/Pasted%20image%2020261005210830.png)
 
 ### 8. Reconocimiento interno
 
 Dentro de la sesión interactiva de shell inversa obtenida, el atacante ejecuta comandos para inspeccionar ficheros críticos del sistema.
 
 - **Fichero consultado:** `/etc/passwd`
-    ![](Pasted%20image%2020261005212138.png)
+    ![](assets/Pasted%20image%2020261005212138.png)
 
 ### 9. Usuario afectado
 
 Como parte de las acciones finales registradas en el análisis, el atacante ejecuta un script interno para manipular las credenciales o restablecer la contraseña de una cuenta en particular.
 
 - **Usuario afectado:** `pinguinito`
-    ![](Pasted%20image%2020261005212216.png)
+    ![](assets/Pasted%20image%2020261005212216.png)
 
 ## Más Allá del Incidente
 
