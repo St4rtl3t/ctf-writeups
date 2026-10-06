@@ -1,4 +1,4 @@
-# SOC-LAB // TICKET #PGN-2026-0417 - El caso de Pinguinito
+# DockerLabs - Analyst
 
 **Resumen:** Durante el análisis forense del laboratorio "El caso de Pinguinito", se evalúa una captura de tráfico (`incidente_pinguino.pcap`) y un archivo de inteligencia de amenazas (`threat_intel_feed.json`). La investigación revela un compromiso web mediante escaneos automatizados, un bypass de restricciones de subida de archivos mediante doble extensión para desplegar una webshell, y actividades posteriores de reconocimiento interno y modificación de credenciales de usuario.
 
