@@ -35,6 +35,7 @@ Empezamos la investigación filtrando en Wireshark por `http`. Entre varios resu
 
 - **IP Source:** `198.51.100.23`
     ![](assets/Pasted%20image%2020261004234717.png)
+  
     ![](assets/Pasted%20image%2020261004235314.png)
 
 Continuando la investigación y revisando las tramas subsiguientes, se constata que la misma IP logró subir una imagen con el siguiente nombre y extensión (`image.jpg.php`), dentro de la ruta `/reviews/uploads/image.jpg.php`, obteniendo de este modo una webshell.
