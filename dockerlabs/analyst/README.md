@@ -49,7 +49,7 @@ Según el feed de threat intelligence adjunto (`threat_intel_feed.json`), analiz
 Utilizando el archivo mencionado en la realización de la consulta (mediante herramientas de texto como `nano`), se comprueba que los metadatos de la IP determinan su procedencia.
 
 - **País:** Vietnam
-- 
+  
  ![](assets/Pasted%20image%2020261005205709.png)
 
 ### 3. Huella del atacante
