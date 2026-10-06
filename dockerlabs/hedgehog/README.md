@@ -6,12 +6,12 @@ El acceso inicial como `tails` permitió identificar una configuración permisiv
 
 ## Información de la Máquina
 
-|Campo|Valor|
-|:--|:--|
-|**Plataforma**|DockerLabs|
-|**Dificultad**|Fácil|
-|**SO**|Linux|
-|**IP**|172.17.0.2|
+| Campo          | Valor      |
+| :------------- | :--------- |
+| **Plataforma** | DockerLabs |
+| **Dificultad** | Fácil      |
+| **SO**         | Linux      |
+| **IP**         | 172.17.0.2 |
 
 ---
 
@@ -28,13 +28,15 @@ nmap -sV -sC 172.17.0.2
 Se identificó el servicio web expuesto en el puerto 80, por lo que se procedió a inspeccionar su contenido.
 
 ### Enumeración web
+
 Al acceder al servicio web se encontró un mensaje que hacía referencia a `tails`.
 
-![Escaneo inicial](Pasted%20image%2020260920220015.png)
+![Escaneo inicial](assets/Pasted%20image%2020260920220015.png)
 
 La referencia a `tails` podía corresponder a un nombre de usuario válido dentro del sistema.
 
 ---
+
 ## Análisis
 
 ### Observaciones
@@ -53,7 +55,7 @@ Esto permitía probar primero las contraseñas que estaban en la parte final del
 
 ### Vulnerabilidad / Vector
 
-**Tipo:** Autenticación débil por contraseña en SSH + filtración de nombres de usuario  
+**Tipo:** Autenticación débil por contraseña en SSH + filtración de nombres de usuario
 **Componente afectado:** Servicio SSH + servicio web en puerto 80
 
 El primer intento con `hydra` utilizando el diccionario estándar arrojaba un tiempo estimado de **3568 horas**, por lo que el ataque no resultaba viable.
@@ -64,12 +66,9 @@ Para optimizarlo se invirtió el diccionario mediante `tac`:
 tac /usr/share/wordlists/rockyou.txt > rockyou_inv.txt
 ```
 
-- **`tac`**: lee las líneas de un archivo en orden inverso.
-    
-- **`/usr/share/wordlists/rockyou.txt`**: diccionario utilizado para el ataque.
-    
-- **`>`**: redirige la salida hacia un nuevo archivo.
-    
+* **`tac`**: lee las líneas de un archivo en orden inverso.
+* **`/usr/share/wordlists/rockyou.txt`**: diccionario utilizado para el ataque.
+* **`>`**: redirige la salida hacia un nuevo archivo.
 
 Posteriormente se eliminaron los espacios en blanco residuales:
 
@@ -77,12 +76,9 @@ Posteriormente se eliminaron los espacios en blanco residuales:
 sed -i 's/ //g' rockyou_inv.txt
 ```
 
-- **`sed`**: herramienta de procesamiento de texto.
-    
-- **`-i`**: modifica el archivo directamente.
-    
-- **`'s/ //g'`**: reemplaza los espacios por nada de forma global.
-    
+* **`sed`**: herramienta de procesamiento de texto.
+* **`-i`**: modifica el archivo directamente.
+* **`'s/ //g'`**: reemplaza los espacios por nada de forma global.
 
 Finalmente se ejecutó el ataque contra SSH utilizando el diccionario invertido:
 
@@ -104,7 +100,8 @@ Una vez dentro, se verificó la identidad del usuario, sus grupos y sus permisos
 whoami && id && sudo -l
 ```
 
-![Credenciales obtenidas](Pasted%20image%2020260920232016.png)
+![Credenciales obtenidas](assets/Pasted%20image%2020260920232016.png)
+
 Los resultados mostraron que `tails` podía ejecutar comandos como el usuario `sonic` **sin proporcionar contraseña**.
 
 ### Escalada al usuario sonic
@@ -116,7 +113,8 @@ sudo su -u sonic /bin/bash
 ```
 
 **Resultado:**
-![Permisos sudo](Pasted%20image%2020260920232633.png)
+
+![Permisos sudo](assets/Pasted%20image%2020260920232633.png)
 
 ```text
 Acceso inicial como tails y escalada al usuario sonic mediante una regla permisiva de sudo.
@@ -127,18 +125,15 @@ Acceso inicial como tails y escalada al usuario sonic mediante una regla permisi
 Se obtuvo acceso inicial al sistema como `tails` mediante un ataque de diccionario contra SSH y posteriormente se realizó una escalada al usuario `sonic` aprovechando una regla `sudo` configurada sin contraseña.
 
 ---
+
 ## Más Allá de Root
 
 **Análisis Post-Explotación**
 
-- **Lo que funcionó:** El razonamiento lateral a partir del nombre `tails` permitió invertir el diccionario y reducir drásticamente el tiempo del ataque.
-    
-- **Lo que falló:** El ataque inicial utilizando el diccionario estándar era inviable, con un tiempo estimado de 3568 horas.
-    
-- **Herramientas nuevas:** Uso de `tac` y `sed` para transformar un diccionario antes de utilizarlo con `hydra`.
-    
-- **Para la próxima:** Antes de ejecutar un ataque de fuerza bruta, calcular el tiempo estimado y considerar variantes del diccionario, como inversión, filtrado o mutaciones.
-    
+* **Lo que funcionó:** El razonamiento lateral a partir del nombre `tails` permitió invertir el diccionario y reducir drásticamente el tiempo del ataque.
+* **Lo que falló:** El ataque inicial utilizando el diccionario estándar era inviable, con un tiempo estimado de 3568 horas.
+* **Herramientas nuevas:** Uso de `tac` y `sed` para transformar un diccionario antes de utilizarlo con `hydra`.
+* **Para la próxima:** Antes de ejecutar un ataque de fuerza bruta, calcular el tiempo estimado y considerar variantes del diccionario, como inversión, filtrado o mutaciones.
 
 ---
 
@@ -152,12 +147,9 @@ Contramedidas recomendadas para cada vulnerabilidad identificada durante la audi
 
 **Mitigaciones:**
 
-- No publicar nombres de usuario reales ni pistas que permitan deducirlos en servicios expuestos.
-    
-- Evitar mensajes de error diferenciados que revelen si un usuario existe o no.
-    
-- Aplicar rate limiting y bloqueo por IP en el servicio SSH.
-    
+* No publicar nombres de usuario reales ni pistas que permitan deducirlos en servicios expuestos.
+* Evitar mensajes de error diferenciados que revelen si un usuario existe o no.
+* Aplicar rate limiting y bloqueo por IP en el servicio SSH.
 
 ### Autenticación débil por contraseña en SSH
 
@@ -165,14 +157,10 @@ Contramedidas recomendadas para cada vulnerabilidad identificada durante la audi
 
 **Mitigaciones:**
 
-- Deshabilitar la autenticación por contraseña (`PasswordAuthentication no`) y utilizar claves SSH.
-    
-- Implementar `fail2ban` o `sshguard` para bloquear IPs después de varios intentos fallidos.
-    
-- Aplicar políticas de contraseñas robustas mediante PAM.
-    
-- Limitar el acceso SSH por rango de IP o mediante VPN.
-    
+* Deshabilitar la autenticación por contraseña (`PasswordAuthentication no`) y utilizar claves SSH.
+* Implementar `fail2ban` o `sshguard` para bloquear IPs después de varios intentos fallidos.
+* Aplicar políticas de contraseñas robustas mediante PAM.
+* Limitar el acceso SSH por rango de IP o mediante VPN.
 
 ### Regla permisiva en sudoers
 
@@ -180,14 +168,10 @@ Contramedidas recomendadas para cada vulnerabilidad identificada durante la audi
 
 **Mitigaciones:**
 
-- Aplicar el principio de mínimo privilegio.
-    
-- Evitar reglas `NOPASSWD` que permitan cambios de usuario o ejecución de intérpretes de comandos.
-    
-- Auditar periódicamente `/etc/sudoers` y `/etc/sudoers.d/`.
-    
-- Revisar las capacidades de cualquier binario delegado mediante `sudo`.
-    
+* Aplicar el principio de mínimo privilegio.
+* Evitar reglas `NOPASSWD` que permitan cambios de usuario o ejecución de intérpretes de comandos.
+* Auditar periódicamente `/etc/sudoers` y `/etc/sudoers.d/`.
+* Revisar las capacidades de cualquier binario delegado mediante `sudo`.
 
 **Defensa en Profundidad:** La combinación de controles preventivos, detectivos y correctivos es lo que realmente reduce la superficie de ataque.
 
@@ -197,10 +181,7 @@ Los controles preventivos incluyen el principio de mínimo privilegio y el uso d
 
 ## Referencias
 
-- [GTFOBins](https://gtfobins.github.io/)
-    
-- [Hydra - Documentación oficial](https://github.com/vanhauser-thc/thc-hydra)
-    
-- [OWASP - Authentication Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html)
-    
-- [Sudoers Manual](https://www.sudo.ws/docs/man/sudoers.man/)
+* [GTFOBins](https://gtfobins.github.io/)
+* [Hydra - Documentación oficial](https://github.com/vanhauser-thc/thc-hydra)
+* [OWASP - Authentication Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html)
+* [Sudoers Manual](https://www.sudo.ws/docs/man/sudoers.man/)
