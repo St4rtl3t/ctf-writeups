@@ -84,6 +84,7 @@ La primera tentativa de subida es bloqueada por el filtro del servidor, pero la 
 Tras acceder al recurso malicioso alojado, el servidor ejecuta las instrucciones y establece una conexión saliente (reverse shell) hacia la infraestructura del atacante.
 
 - **Puerto de conexión:** `8080`
+  
     ![](assets/Pasted%20image%2020261005210830.png)
 
 ### 8. Reconocimiento interno
