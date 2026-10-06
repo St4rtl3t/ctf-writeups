@@ -41,7 +41,7 @@ Empezamos la investigación filtrando en Wireshark por `http`. Entre varios resu
 Continuando la investigación y revisando las tramas subsiguientes, se constata que la misma IP logró subir una imagen con el siguiente nombre y extensión (`image.jpg.php`), dentro de la ruta `/reviews/uploads/image.jpg.php`, obteniendo de este modo una webshell.
 
 - ![](assets/Pasted%20image%2020261005201951.png)
-- 
+
 ### 2. Atribución geográfica
 
 Según el feed de threat intelligence adjunto (`threat_intel_feed.json`), analizando específicamente la IP atacante identificada en la sección anterior:
