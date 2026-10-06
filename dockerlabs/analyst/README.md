@@ -92,6 +92,7 @@ Tras acceder al recurso malicioso alojado, el servidor ejecuta las instrucciones
 Dentro de la sesión interactiva de shell inversa obtenida, el atacante ejecuta comandos para inspeccionar ficheros críticos del sistema.
 
 - **Fichero consultado:** `/etc/passwd`
+  
     ![](assets/Pasted%20image%2020261005212138.png)
 
 ### 9. Usuario afectado
@@ -99,6 +100,7 @@ Dentro de la sesión interactiva de shell inversa obtenida, el atacante ejecuta 
 Como parte de las acciones finales registradas en el análisis, el atacante ejecuta un script interno para manipular las credenciales o restablecer la contraseña de una cuenta en particular.
 
 - **Usuario afectado:** `pinguinito`
+  
     ![](assets/Pasted%20image%2020261005212216.png)
 
 ## Más Allá del Incidente
