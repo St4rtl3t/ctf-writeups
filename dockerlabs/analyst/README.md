@@ -24,6 +24,7 @@ nmap -sS -p- -vvv --min-rate 5000 172.17.0.2
 ![](assets/Pasted%20image%2020261004232340.png)
 
 Posteriormente, se inspecciona el servicio web expuesto en el puerto 80, descargando el archivo de captura de tráfico (`.pcap`) y dando inicio formal al caso interactivo desde la plataforma.
+
 ![](assets/Pasted%20image%2020261004232957.png)
 
 ## Análisis de Tráfico e Investigación (Forense Web)
@@ -39,6 +40,7 @@ Empezamos la investigación filtrando en Wireshark por `http`. Entre varios resu
 Continuando la investigación y revisando las tramas subsiguientes, se constata que la misma IP logró subir una imagen con el siguiente nombre y extensión (`image.jpg.php`), dentro de la ruta `/reviews/uploads/image.jpg.php`, obteniendo de este modo una webshell.
 
 - ![](assets/Pasted%20image%2020261005201951.png)
+- 
 ### 2. Atribución geográfica
 
 Según el feed de threat intelligence adjunto (`threat_intel_feed.json`), analizando específicamente la IP atacante identificada en la sección anterior:
@@ -46,7 +48,7 @@ Según el feed de threat intelligence adjunto (`threat_intel_feed.json`), analiz
 Utilizando el archivo mencionado en la realización de la consulta (mediante herramientas de texto como `nano`), se comprueba que los metadatos de la IP determinan su procedencia.
 
 - **País:** Vietnam
-    ![](assets/Pasted%20image%2020261005205709.png)
+-   ![](assets/Pasted%20image%2020261005205709.png)
 
 ### 3. Huella del atacante
 
